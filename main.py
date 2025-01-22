@@ -4,7 +4,7 @@ import numpy as np
 from typing import Final, List, Optional
 from constants import (
     SYNTHETIC_DIR, REAL_DATA_DIR, NUM_SAMPLES,
-    IMAGE_SIZE, NOISE_LEVEL, THETA, DOWNLOAD_URL
+    IMAGE_SIZE, NOISE_LEVEL, THETA
 )
 from synthetic_data import generate_dataset
 from data_downloader import download_real_ct_data
@@ -111,7 +111,7 @@ def main() -> None:
 
         if args.download:
             print("Downloading real CT data...")
-            download_real_ct_data(REAL_DATA_DIR, DOWNLOAD_URL)
+            download_real_ct_data()
             return
 
         if args.process is not None:
