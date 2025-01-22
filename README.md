@@ -6,7 +6,9 @@ This project applies the Radon Transform in medical imaging, focusing on synthet
 
 - **Synthetic Data Generation**: Create CT phantoms with random shapes and noise.
 - **Radon Transform**: Compute sinograms.
+    - Optional custom implementation
 - **Image Reconstruction**: Perform filtered and simple back projections.
+    - Optional custom implementation
 - **Metrics Calculation**: Evaluate reconstruction quality using MSE, PSNR, and SSIM.
 - **Visualization**: Visualize images with Plotly and Matplotlib.
 
