@@ -80,6 +80,7 @@ def _back_project(sinogram: np.ndarray, theta: np.ndarray, filtered: bool) -> np
     reconstruction = np.zeros((sinogram.shape[0], sinogram.shape[0]))
     x_center = sinogram.shape[0] // 2
 
+    # integral over (proj,angle) in R^2
     for i, (proj, angle) in enumerate(zip(sinogram.T, theta)):
         if filtered:
             # Frequency domain filtering
