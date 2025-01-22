@@ -8,55 +8,68 @@ from datetime import datetime
 from constants import DICOM_METADATA
 
 def _create_dicom_base(image: np.ndarray, is_sinogram: bool = False) -> FileDataset:
-    """Create valid DICOM structure with required metadata"""
-    # File meta info
-    file_meta = pydicom.dataset.FileMetaDataset()
+    """Create DICOM dataset compliant with CT Image Storage SOP Class"""
+    # File Meta Information
+    file_meta = pydicom.FileMetaDataset()
     file_meta.TransferSyntaxUID = ExplicitVRLittleEndian
-    file_meta.MediaStorageSOPClassUID = pydicom.uid.CTImageStorage
+    file_meta.MediaStorageSOPClassUID = generate_uid()
     file_meta.MediaStorageSOPInstanceUID = generate_uid()
     file_meta.ImplementationClassUID = generate_uid()
-    file_meta.ImplementationVersionName = "SYNTHETIC_CT_1.0"
-
-    # Create dataset
+    
+    # Main Dataset
     ds = FileDataset(None, {}, file_meta=file_meta, preamble=b"\0"*128)
     
-    # Set required DICOM attributes
-    ds.SOPClassUID = file_meta.MediaStorageSOPClassUID
-    ds.SOPInstanceUID = file_meta.MediaStorageSOPInstanceUID
-    ds.Modality = DICOM_METADATA["Modality"]
+    # Patient Module
     ds.PatientID = DICOM_METADATA["PatientID"]
     ds.PatientName = DICOM_METADATA["PatientName"]
     
-    # Image parameters
+    # Study Module
+    ds.StudyInstanceUID = generate_uid()
+    ds.StudyDate = datetime.now().strftime('%Y%m%d')
+    ds.StudyTime = datetime.now().strftime('%H%M%S')
+    
+    # Series Module
+    ds.SeriesInstanceUID = generate_uid()
+    ds.SeriesNumber = 1
+    ds.Modality = "CT"
+    ds.SeriesDate = ds.StudyDate
+    ds.SeriesTime = ds.StudyTime
+    
+    # Frame of Reference
+    ds.FrameOfReferenceUID = generate_uid()
+    
+    # Image Pixel Module
     ds.Rows, ds.Columns = image.shape
-    ds.BitsAllocated = DICOM_METADATA["BitsAllocated"]
-    ds.BitsStored = DICOM_METADATA["BitsAllocated"]
-    ds.HighBit = DICOM_METADATA["BitsAllocated"] - 1
-    ds.PixelRepresentation = DICOM_METADATA["PixelRepresentation"]
+    ds.BitsAllocated = 16
+    ds.BitsStored = 16
+    ds.HighBit = 15
+    ds.PixelRepresentation = 0  # Unsigned integer
     ds.SamplesPerPixel = 1
     ds.PhotometricInterpretation = "MONOCHROME2"
     
-    # Normalize and convert pixel data
-    image = (image - image.min()) / (image.max() - image.min()) * 65535
-    ds.PixelData = image.astype(np.uint16).tobytes()
+    # CT Image Module
+    ds.KVP = 120  # Tube voltage in kV
+    ds.ExposureTime = 1000  # In ms
+    ds.XRayTubeCurrent = 300  # In mA
+    ds.RescaleSlope = 1.0
+    ds.RescaleIntercept = -1000.0
+    ds.WindowCenter = 40
+    ds.WindowWidth = 400
+    ds.SliceThickness = 1.0
     
-    # Add specific metadata
+    # Convert to Hounsfield Units
+    hu_image = (image * 2000) - 1000  # Scale [0,1] → [-1000, +1000] HU
+    ds.PixelData = hu_image.astype(np.int16).tobytes()
+    
+    # Type-specific metadata
     if is_sinogram:
         ds.SeriesDescription = "Radon Transform Sinogram"
         ds.ImageType = ["DERIVED", "SECONDARY"]
+        ds.BodyPartExamined = "SYNTHETIC"
     else:
         ds.SeriesDescription = "Synthetic CT Phantom"
-        ds.ImageType = ["ORIGINAL", "PRIMARY"]
-    
-    # Add required dates
-    current_date = datetime.now().strftime('%Y%m%d')
-    current_time = datetime.now().strftime('%H%M%S')
-    ds.ContentDate = current_date
-    ds.ContentTime = current_time
-    ds.StudyDate = current_date
-    ds.StudyTime = current_time
-    ds.SeriesDate = current_date
-    ds.SeriesTime = current_time
+        ds.ImageType = ["ORIGINAL", "PRIMARY"] 
+        ds.BodyPartExamined = "ABDOMEN"
     
     return ds
 
