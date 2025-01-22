@@ -2,9 +2,21 @@ import os
 from typing import Final
 import numpy as np
 
+###################################################################################
+
+
 # Path configuration
 DATA_DIR: Final[str] = os.path.join(os.getcwd(), 'data')
 SYNTHETIC_DIR: Final[str] = os.path.join(DATA_DIR, 'synthetic_data')
+
+REAL_DATA_DIR: Final[str] = os.path.join(DATA_DIR, 'real_data')
+DOWNLOAD_URL: Final[str] = [
+    f"https://www.visus.com/fileadmin/content/pictures/Downloads/JiveX_DICOME_Viewer/case{i}.zip"
+    for i in range(1, 7+1)
+]
+
+###################################################################################
+
 
 # Image parameters
 IMAGE_SIZE: Final[int] = 256
@@ -20,6 +32,7 @@ DICOM_METADATA: Final[dict] = {
     "BitsAllocated": 16,
     "PixelRepresentation": 0,
 }
+
 
 ###################################################################################
 

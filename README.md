@@ -12,12 +12,11 @@ This project applies the Radon Transform in medical imaging, focusing on synthet
 
 ## Usage
 
-### Generate Synthetic Data
-
-To generate synthetic CT scans:
+### Get Data
 
 ```bash
-python main.py --generate
+python3 main.py --generate # to generate
+python3 main.py --download # to download real data
 ```
 
 ### Process a Specific Sample
@@ -25,10 +24,12 @@ python main.py --generate
 To process a sample by its ID:
 
 ```bash
-python main.py --process <sample_id>
-```
+# Process synthetic sample 2 (both clean/noisy)
+python main.py --process 2 --data-type synthetic
 
-Replace `<sample_id>` with the desired index.
+# Process real sample 0
+python main.py --process 0 --data-type real # not working yet
+```
 
 ## Dependencies
 
@@ -39,3 +40,10 @@ Replace `<sample_id>` with the desired index.
 - Plotly
 - Matplotlib
 - pydicom
+
+## DICOM data
+
+- https://www.visus.com/en/downloads/jivex-dicom-viewer.html
+    - Implemented
+- https://singularhealth-my.sharepoint.com/personal/jhill_singular_health/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fjhill%5Fsingular%5Fhealth%2FDocuments%2F3Dicom%20%2D%20DICOM%20Library&ga=1
+    - TODO
