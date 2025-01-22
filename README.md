@@ -7,5 +7,4 @@ python main.py --generate
 python main.py --process 2
 ```
 
-Remark:
-- 
+HU 

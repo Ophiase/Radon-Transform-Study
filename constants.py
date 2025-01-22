@@ -22,3 +22,8 @@ DICOM_METADATA: Final[dict] = {
 }
 
 ###################################################################################
+
+HOUNSFIELD_AIR: Final[int] = -1000
+HOUNSFIELD_WATER: Final[int] = 0
+HOUNSFIELD_BONE: Final[int] = 1000
+HOUNSFIELD_SOFT_TISSUE: Final[tuple] = (20, 80)
