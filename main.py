@@ -9,25 +9,27 @@ from radon_transform import compute_sinogram, filtered_back_projection, simple_b
 from metrics import calculate_metrics
 from visualization import plot_results
 
+
 def process_sample(phantom: np.ndarray, sample_id: int, sample_type: str) -> None:
     """Full processing pipeline for a single CT sample"""
     print(f"\nProcessing {sample_type} sample {sample_id}")
-    
+
     # Compute Radon transform
     sinogram = compute_sinogram(phantom, THETA)
-    
+
     # Save sinogram
-    sinogram_path = os.path.join(SYNTHETIC_DIR, f"sinogram_{sample_id}_{sample_type}.dcm")
+    sinogram_path = os.path.join(
+        SYNTHETIC_DIR, f"sinogram_{sample_id}_{sample_type}.dcm")
     save_sinogram_dicom(sinogram, sinogram_path)
-    
+
     # Reconstructions
     fbp_recon = filtered_back_projection(sinogram, THETA, IMAGE_SIZE)
     bp_recon = simple_back_projection(sinogram, THETA, IMAGE_SIZE)
-    
+
     # Calculate metrics
     metrics_fbp = calculate_metrics(phantom, fbp_recon)
     metrics_bp = calculate_metrics(phantom, bp_recon)
-    
+
     # Visualize results
     plot_results(
         phantom, sinogram, fbp_recon, bp_recon,
@@ -35,10 +37,13 @@ def process_sample(phantom: np.ndarray, sample_id: int, sample_type: str) -> Non
         title_suffix=f"Sample {sample_id} ({sample_type})"
     )
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="CT Scan Processing Pipeline")
-    parser.add_argument("--generate", action="store_true", help="Generate synthetic dataset")
-    parser.add_argument("--process", type=int, help="Process specific sample by ID (0-based)")
+    parser.add_argument("--generate", action="store_true",
+                        help="Generate synthetic dataset")
+    parser.add_argument("--process", type=int,
+                        help="Process specific sample by ID (0-based)")
     args = parser.parse_args()
 
     if args.generate:
@@ -52,23 +57,28 @@ def main() -> None:
             print(f"Error: Sample index must be between 0 and {NUM_SAMPLES-1}")
             return
 
-        # Process both clean and noisy versions
-        for sample_type in ["clean", "noisy"]:
+        TO_PROCESS = [
+            # "clean",
+            "noisy"
+        ]
+
+        for sample_type in TO_PROCESS:
             file_path = os.path.join(
                 SYNTHETIC_DIR,
                 f"phantom_{args.process}_{sample_type}.dcm"
             )
-            
+
             if not os.path.exists(file_path):
                 print(f"File not found: {file_path}")
                 continue
-                
+
             phantom = load_dicom(file_path)
             process_sample(phantom, args.process, sample_type)
 
         return
 
     print("Please specify either --generate or --process <sample_id>")
+
 
 if __name__ == "__main__":
     main()
