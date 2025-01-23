@@ -57,7 +57,7 @@ def _create_dicom_base(image: np.ndarray, is_sinogram: bool = False) -> FileData
     ds.SliceThickness = 1.0
     
     # Convert to Hounsfield Units
-    hu_image = (image * 2000) - 1000  # Scale [0,1] -> [-1000, +1000] HU
+    hu_image = _to_hounsfield(image)  
     ds.PixelData = hu_image.astype(np.int16).tobytes()
     
     # Type-specific metadata
@@ -71,6 +71,19 @@ def _create_dicom_base(image: np.ndarray, is_sinogram: bool = False) -> FileData
         ds.BodyPartExamined = "ABDOMEN"
     
     return ds
+
+
+def _to_hounsfield(tensor: np.ndarray) -> np.ndarray:
+    # Scale [0,1] -> [-1000, +1000] HU
+    return (tensor * 2000) - 1000
+
+def _from_hounsfield(tensor: np.ndarray) -> np.ndarray:
+    # [-1000, +1000] HU -> Scale [0,1]  
+    # return np.clip((tensor + 1000) / 2000, 0.0, 1.0) # not working?
+    return (tensor - tensor.min()) / (tensor.max() - tensor.min())
+
+###################################################################################
+
 
 def save_phantom_dicom(phantom: np.ndarray, filename: str) -> None:
     """Save phantom image as valid DICOM file"""
@@ -87,4 +100,4 @@ def load_dicom(filename: str) -> np.ndarray:
     ds = pydicom.dcmread(filename)
     ds.file_meta.TransferSyntaxUID = ExplicitVRLittleEndian
     image = ds.pixel_array.astype(np.float32)
-    return (image - image.min()) / (image.max() - image.min())
+    return _from_hounsfield(image)
