@@ -1,4 +1,3 @@
-# radon_transform.py
 import numpy as np
 from typing import Optional
 from skimage.transform import radon as sk_radon, iradon as sk_iradon

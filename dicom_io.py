@@ -1,4 +1,3 @@
-# dicom_io.py
 import pydicom
 from pydicom.dataset import Dataset, FileDataset
 from pydicom.uid import ExplicitVRLittleEndian, generate_uid
@@ -58,7 +57,7 @@ def _create_dicom_base(image: np.ndarray, is_sinogram: bool = False) -> FileData
     ds.SliceThickness = 1.0
     
     # Convert to Hounsfield Units
-    hu_image = (image * 2000) - 1000  # Scale [0,1] → [-1000, +1000] HU
+    hu_image = (image * 2000) - 1000  # Scale [0,1] -> [-1000, +1000] HU
     ds.PixelData = hu_image.astype(np.int16).tobytes()
     
     # Type-specific metadata
