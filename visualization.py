@@ -79,7 +79,9 @@ def _create_figure(title_suffix: str) -> go.Figure:
 
 
 def _add_heatmap_trace(fig: go.Figure, image: np.ndarray,
-                       row: int, col: int, name: str) -> None:
+                       row: int, col: int, name: str,
+                       clamped: bool = True
+                       ) -> None:
     """Add validated heatmap trace to figure"""
     fig.add_trace(
         go.Heatmap(
@@ -87,8 +89,8 @@ def _add_heatmap_trace(fig: go.Figure, image: np.ndarray,
             colorscale=MEDICAL_GRAYSCALE,
             showscale=False,
             hoverinfo="x+y+z",
-            zmin=0,
-            zmax=1,
+            zmin=0 if clamped else None,
+            zmax=1 if clamped else None,
             name=name
         ),
         row=row,
@@ -157,9 +159,9 @@ def plot_results(
 
         # Add image data
         _add_heatmap_trace(fig, original, 1, 1, "Original")
-        _add_heatmap_trace(fig, sinogram, 1, 2, "Sinogram")
+        _add_heatmap_trace(fig, sinogram, 1, 2, "Sinogram", clamped=False)
         _add_heatmap_trace(fig, fbp, 2, 1, "FBP")
-        _add_heatmap_trace(fig, bp, 2, 2, "BP")
+        _add_heatmap_trace(fig, bp, 2, 2, "BP", clamped=False)
 
         # Add metrics to titles
         _add_metrics_annotations(fig, metrics_fbp, metrics_bp)

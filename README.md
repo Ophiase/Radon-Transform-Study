@@ -2,6 +2,9 @@
 
 This project applies the Radon Transform in medical imaging, focusing on synthetic CT scan generation, sinogram computation, and image reconstruction. It includes filtered and simple back projection methods and evaluates reconstruction quality using various metrics.
 
+<img src="./resources/real_data.png" width=400> 
+<img src="resources/synthetic_data.png" width=400>
+
 ## Features
 
 - **Synthetic Data Generation**: Create CT phantoms with random shapes and noise.
