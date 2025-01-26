@@ -36,9 +36,6 @@ python main.py --process 1_008 --data-type real
 python main.py --process 2b_001 --data-type real
 ```
 
-- Result on ``--process 2 --data-type synthetic``
-    - <img src="./resources/experiment.png" width=300>
-
 ## Dependencies
 
 - Python 3.8+
