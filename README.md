@@ -26,11 +26,12 @@ python3 main.py --download # to download real data
 To process a sample by its ID:
 
 ```bash
-# Process synthetic sample 2 (both clean/noisy)
+# Process synthetic sample 2
 python main.py --process 2 --data-type synthetic
 
-# Process real sample 0
-python main.py --process 0 --data-type real # not working yet
+# Process real samples
+python main.py --process 1_008 --data-type real
+python main.py --process 2b_001 --data-type real
 ```
 
 - Result on ``--process 2 --data-type synthetic``
@@ -50,5 +51,3 @@ python main.py --process 0 --data-type real # not working yet
 
 - https://www.visus.com/en/downloads/jivex-dicom-viewer.html
     - Implemented
-- https://singularhealth-my.sharepoint.com/personal/jhill_singular_health/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fjhill%5Fsingular%5Fhealth%2FDocuments%2F3Dicom%20%2D%20DICOM%20Library&ga=1
-    - TODO

@@ -103,11 +103,13 @@ def _configure_axes(fig: go.Figure) -> None:
 
 
 def _add_metrics_annotations(fig: go.Figure,
-                             metrics_fbp: Tuple[float, float, float],
-                             metrics_bp: Tuple[float, float, float]) -> None:
+                             metrics_fbp: Tuple[float, float, float] = None,
+                             metrics_bp: Tuple[float, float, float] = None) -> None:
     """Dynamically update subplot titles with metrics"""
-    fig.layout.annotations[2].text += f"MSE: {metrics_fbp[0]:.4f}, SSIM: {metrics_fbp[2]:.3f}"
-    fig.layout.annotations[3].text += f"MSE: {metrics_bp[0]:.4f}, SSIM: {metrics_bp[2]:.3f}"
+    if metrics_fbp is not None:
+        fig.layout.annotations[2].text += f"MSE: {metrics_fbp[0]:.4f}, SSIM: {metrics_fbp[2]:.3f}"
+    if metrics_bp is not None:
+        fig.layout.annotations[3].text += f"MSE: {metrics_bp[0]:.4f}, SSIM: {metrics_bp[2]:.3f}"
 
 
 def create_windowing_buttons() -> list:
@@ -141,8 +143,8 @@ def _add_controls(fig: go.Figure) -> None:
 def plot_results(
         original: np.ndarray, sinogram: np.ndarray,
         fbp: np.ndarray, bp: np.ndarray,
-        metrics_fbp: Tuple[float, float, float],
-        metrics_bp: Tuple[float, float, float],
+        metrics_fbp: Tuple[float, float, float] = None,
+        metrics_bp: Tuple[float, float, float] = None,
         title_suffix: str = "",
         show: bool = True) -> Optional[go.Figure]:
     """

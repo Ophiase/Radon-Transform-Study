@@ -15,7 +15,6 @@ from visualization import plot_results
 
 ###################################################################################
 
-
 # Constants for processing configuration
 SYNTHETIC_PROCESS_MODES: Final[List[str]] = [
     # "clean",
@@ -26,19 +25,28 @@ REAL_PROCESS_MODES: Final[List[str]] = ["original"]
 ###################################################################################
 
 
-def validate_sample_id(sample_id: int, max_samples: int) -> bool:
-    """Ensure sample ID is within valid range with descriptive errors"""
-    if not isinstance(sample_id, int):
-        print(f"Error: Sample ID must be integer, got {type(sample_id)}")
-        return False
-    if 0 <= sample_id < max_samples:
+def validate_sample_id(sample_id: str, data_type: str) -> bool:
+    """Validate sample ID based on data type"""
+    if data_type == "real":
+        if "_" not in sample_id:
+            print(f"Invalid real data format. Use 'X_XXX' format (e.g., 1_008)")
+            return False
         return True
-    print(f"Error: Sample index must be between 0 and {max_samples-1}")
-    return False
+    else:
+        try:
+            id_num = int(sample_id)
+            if 0 <= id_num < NUM_SAMPLES:
+                return True
+            print(
+                f"Synthetic sample index must be between 0 and {NUM_SAMPLES-1}")
+            return False
+        except ValueError:
+            print(f"Invalid synthetic sample ID: {sample_id}")
+            return False
 
 
 def process_phantom(phantom: np.ndarray, data_path: str,
-                    sample_id: int, process_mode: str) -> None:
+                    sample_id: str, process_mode: str) -> None:
     """Core processing pipeline for a single phantom"""
     try:
         print(f"\nProcessing sample {sample_id} ({process_mode})")
@@ -49,7 +57,7 @@ def process_phantom(phantom: np.ndarray, data_path: str,
         # Save sinogram with mode differentiation
         sinogram_dir = os.path.join(data_path, "sinograms")
         os.makedirs(sinogram_dir, exist_ok=True)
-        sinogram_file = f"sinogram_{sample_id}_{process_mode}.dcm"
+        sinogram_file = f"sinogram_{sample_id.replace('_', '-')}_{process_mode}.dcm"
         save_sinogram_dicom(sinogram, os.path.join(
             sinogram_dir, sinogram_file))
 
@@ -73,20 +81,45 @@ def process_phantom(phantom: np.ndarray, data_path: str,
         raise
 
 
-def process_data_sample(data_path: str, sample_id: int,
-                        process_modes: List[str]) -> None:
-    """Handle all processing modes for a single data sample"""
-    for mode in process_modes:
+def process_real_data_sample(data_path: str, sample_id: str) -> None:
+    """Handle processing of real CT cases"""
+    try:
+        case_num, file_num = sample_id[0:1], sample_id[1:1]
+        case_dir = f"case{case_num}"
+        file_prefix = f"case{case_num}{file_num}"
+
+        case_path = os.path.join(data_path, case_dir)
+        if not os.path.isdir(case_path):
+            raise FileNotFoundError(f"Case directory not found: {case_path}")
+
+        # Find matching DICOM file
+        matches = [f for f in os.listdir(case_path)
+                   if f.startswith(file_prefix) and f.endswith('.dcm')]
+
+        if not matches:
+            raise FileNotFoundError(f"No DICOM files found for {sample_id}")
+
+        file_path = os.path.join(case_path, matches[0])
+        phantom = load_dicom(file_path)
+        process_phantom(phantom, data_path, sample_id, "original")
+
+    except Exception as e:
+        print(f"Error processing real data sample: {str(e)}")
+        raise
+
+
+def process_synthetic_data_sample(data_path: str, sample_id: int) -> None:
+    """Handle all processing modes for synthetic data"""
+    for mode in SYNTHETIC_PROCESS_MODES:
         try:
-            # Construct filename based on processing mode
-            file_name = (f"phantom_{sample_id}_{mode}.dcm")
+            file_name = f"phantom_{sample_id}_{mode}.dcm"
             file_path = os.path.join(data_path, file_name)
 
             if not os.path.exists(file_path):
                 raise FileNotFoundError(f"DICOM file not found: {file_path}")
 
             phantom = load_dicom(file_path)
-            process_phantom(phantom, data_path, sample_id, mode)
+            process_phantom(phantom, data_path, str(sample_id), mode)
 
         except Exception as e:
             print(f"Error processing {mode} mode: {str(e)}")
@@ -105,8 +138,8 @@ def main() -> None:
                         help="Generate synthetic dataset")
     parser.add_argument("--download", action="store_true",
                         help="Download real CT dataset")
-    parser.add_argument("--process", type=int,
-                        help="Process sample by ID (0-based)")
+    parser.add_argument("--process", type=str,
+                        help="Process sample by ID (format: N for synthetic, X_XXX for real)")
     parser.add_argument("--data-type", choices=["synthetic", "real"], default="synthetic",
                         help="Type of data to process")
 
@@ -128,19 +161,17 @@ def main() -> None:
             return
 
         if args.process is not None:
-            # Validate data directory exists
             if not os.path.isdir(data_path):
                 raise NotADirectoryError(
                     f"Data directory not found: {data_path}")
 
-            # Configure processing parameters
-            process_modes = (REAL_PROCESS_MODES if args.data_type == "real"
-                             else SYNTHETIC_PROCESS_MODES)
-            max_samples = (len(os.listdir(REAL_DATA_DIR)) if args.data_type == "real"
-                           else NUM_SAMPLES)
+            if not validate_sample_id(args.process, args.data_type):
+                return
 
-            if validate_sample_id(args.process, max_samples):
-                process_data_sample(data_path, args.process, process_modes)
+            if args.data_type == "real":
+                process_real_data_sample(data_path, args.process)
+            else:
+                process_synthetic_data_sample(data_path, int(args.process))
             return
 
         parser.print_help()
