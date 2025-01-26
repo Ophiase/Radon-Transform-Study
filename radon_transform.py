@@ -1,5 +1,4 @@
 import numpy as np
-from typing import Optional
 from skimage.transform import radon as sk_radon, iradon as sk_iradon
 from scipy.fft import fft, fftfreq, ifft
 from scipy.ndimage import rotate
@@ -7,7 +6,7 @@ from scipy.ndimage import rotate
 ###################################################################################
 
 DEFAULT_USE_LIBRARY_RADON: bool = True # Works
-DEFAULT_USE_LIBRARY_FBP: bool = True # TODO (not working)
+DEFAULT_USE_LIBRARY_FBP: bool = True # Works
 DEFAULT_USE_LIBRARY_BP: bool = True # ??? (both don't work great)
 
 ###################################################################################
@@ -34,9 +33,8 @@ def filtered_back_projection(
     if use_library:
         return sk_iradon(sinogram, theta=theta, filter_name='ramp', output_size=size, circle=False)
 
-    # Custom implementation
-    scaled_sino = np.clip(sinogram, -1e6, 1e6)  # Prevent overflow
-    return _back_project(scaled_sino, theta, filtered=True)[:size, :size]
+    filtered_sino = _apply_ramp_filter(sinogram)
+    return _back_project(filtered_sino, theta, size)
 
 
 def simple_back_projection(
@@ -49,9 +47,7 @@ def simple_back_projection(
     if use_library:
         return sk_iradon(sinogram, theta=theta, filter_name=None, output_size=size, circle=False)
 
-    # Custom implementation
-    scaled_sino = np.clip(sinogram, -1e6, 1e6)
-    return _back_project(scaled_sino, theta, filtered=False)[:size, :size]
+    return _back_project(sinogram, theta, size)
 
 
 ###################################################################################
@@ -69,28 +65,44 @@ def _radon_custom(image: np.ndarray, theta: np.ndarray) -> np.ndarray:
 
 
 def _ramp_filter(projection_size: int) -> np.ndarray:
-    """Create frequency-domain ramp filter"""
-    freq = fftfreq(projection_size).reshape(-1, 1)
-    return np.abs(freq) * 2  # Ram-Lak filter
+    """Create 1D frequency-domain ramp filter"""
+    freq = fftfreq(projection_size)
+    return np.abs(freq) * 2  # Correct 1D Ram-Lak filter
 
 
-def _back_project(sinogram: np.ndarray, theta: np.ndarray, filtered: bool) -> np.ndarray:
-    """Core back projection algorithm"""
-    reconstruction = np.zeros((sinogram.shape[0], sinogram.shape[0]))
-    x_center = sinogram.shape[0] // 2
+def _apply_ramp_filter(sinogram: np.ndarray) -> np.ndarray:
+    """Apply ramp filter to each projection"""
+    filtered_sino = np.zeros_like(sinogram)
+    for i in range(sinogram.shape[1]):
+        proj = sinogram[:, i]
+        f_proj = fft(proj)
+        filtered_proj = np.real(ifft(f_proj * _ramp_filter(len(proj))))
+        filtered_sino[:, i] = filtered_proj
+    return filtered_sino
 
-    # integral over (proj,angle) in R^2
-    for i, (proj, angle) in enumerate(zip(sinogram.T, theta)):
-        if filtered:
-            # Frequency domain filtering
-            f_proj = fft(proj)
-            filtered_proj = np.real(ifft(f_proj * _ramp_filter(len(proj))))
-        else:
-            filtered_proj = proj
 
-        # Create 2D projection
-        backproj = np.tile(filtered_proj, (sinogram.shape[0], 1))
-        rotated = rotate(backproj, angle, reshape=False, order=1)
-        reconstruction += rotated
+def _back_project(sinogram: np.ndarray, theta: np.ndarray, size: int) -> np.ndarray:
+    """Coordinate-based back projection avoiding rotation artifacts"""
+    N = sinogram.shape[0]
+    reconstruction = np.zeros((size, size))
+    center = N // 2
 
-    return reconstruction * np.pi / (2 * len(theta))
+    # Create grid centered at reconstruction center
+    x = np.arange(size) - size//2
+    y = np.arange(size) - size//2
+    X, Y = np.meshgrid(x, y)
+
+    for i, angle in enumerate(theta):
+        proj = sinogram[:, i]
+        theta_rad = np.deg2rad(angle)
+
+        # Calculate detector positions for all points
+        rot_X = X * np.cos(theta_rad) + Y * np.sin(theta_rad)
+        detector_pos = rot_X + center
+
+        # Interpolate and accumulate
+        interp_proj = np.interp(detector_pos.flatten(),
+                                np.arange(N), proj, left=0, right=0)
+        reconstruction += interp_proj.reshape(size, size)
+
+    return reconstruction
