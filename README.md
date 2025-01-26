@@ -2,8 +2,7 @@
 
 This project applies the Radon Transform in medical imaging, focusing on synthetic CT scan generation, sinogram computation, and image reconstruction. It includes filtered and simple back projection methods and evaluates reconstruction quality using various metrics.
 
-<img src="./resources/real_data.png" width=400> 
-<img src="resources/synthetic_data.png" width=400>
+<img src="./resources/real_data.png" width=400> <img src="resources/synthetic_data.png" width=400>
 
 ## Features
 
@@ -13,7 +12,7 @@ This project applies the Radon Transform in medical imaging, focusing on synthet
 - **Image Reconstruction**: Perform filtered and simple back projections.
     - Optional custom implementation
 - **Metrics Calculation**: Evaluate reconstruction quality using MSE, PSNR, and SSIM.
-- **Visualization**: Visualize images with Plotly and Matplotlib.
+- **Visualization**: Visualize images with Plotly and Matplgotlib.
 
 ## Usage
 
